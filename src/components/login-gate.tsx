@@ -38,7 +38,7 @@ export function LoginGate() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-6">
+    <div className="flex min-h-dvh flex-col items-center justify-center overflow-hidden overscroll-none px-6">
       <AnimatePresence mode="wait">
         {phase === "splash" ? (
           <motion.div

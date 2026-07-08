@@ -47,7 +47,7 @@ export function LoginGateA() {
   };
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-[#f5f0e8] px-6 text-[#3d3832]">
+    <div className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden overscroll-none bg-[#f5f0e8] px-6 text-[#3d3832]">
       <div
         className="pointer-events-none fixed inset-0 opacity-[0.035]"
         style={{

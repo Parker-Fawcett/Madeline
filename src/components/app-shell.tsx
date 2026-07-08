@@ -6,7 +6,7 @@ import { getUnlocked } from "@/lib/storage";
 import { NavBar } from "./nav-bar";
 import { PageTransition } from "./page-transition";
 
-const fullscreenRoutes = ["/home"];
+const fullscreenRoutes = ["/", "/home"];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
