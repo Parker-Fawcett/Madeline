@@ -7,6 +7,7 @@ import { getVisited, isRevealUnlocked } from "@/lib/storage";
 import { requestLandscapeLock } from "@/lib/orientationLock";
 import { FlatHome } from "@/components/fallback/FlatHome";
 import { RotateDeviceOverlay } from "@/components/three/RotateDeviceOverlay";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const Scene3D = dynamic(
   () => import("@/components/three/Scene3D"),
@@ -14,7 +15,7 @@ const Scene3D = dynamic(
 );
 
 export default function HomePage() {
-  const [webglOk, setWebglOk] = useState<boolean | null>(null);
+  const [webglOk, setWebglOk] = useState(false);
   const [visited, setVisited] = useState<string[]>([]);
   const [revealUnlocked, setRevealUnlocked] = useState(false);
 
@@ -43,22 +44,20 @@ export default function HomePage() {
     }, 100);
   };
 
-  if (webglOk === false) {
+  if (!webglOk) {
     return <FlatHome />;
   }
 
-  if (webglOk === null) {
-    return null;
-  }
-
   return (
-    <div className="fixed inset-0">
-      <Scene3D
-        visited={visited}
-        revealUnlocked={revealUnlocked}
-        onVisitedChange={handleVisitedChange}
-      />
-      <RotateDeviceOverlay />
-    </div>
+    <ErrorBoundary fallback={<FlatHome />}>
+      <div className="fixed inset-0">
+        <Scene3D
+          visited={visited}
+          revealUnlocked={revealUnlocked}
+          onVisitedChange={handleVisitedChange}
+        />
+        <RotateDeviceOverlay />
+      </div>
+    </ErrorBoundary>
   );
 }
