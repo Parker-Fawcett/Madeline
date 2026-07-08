@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { getVisited, isRevealUnlocked, REQUIRED_ROUTES } from "@/lib/storage";
 import { ContentOverlay } from "@/components/three/ContentOverlay";
+import { RevealAnnouncement } from "@/components/three/RevealAnnouncement";
 
 const sections = [
   {
@@ -60,10 +61,14 @@ export function FlatHome() {
   const [selected, setSelected] = useState<string | null>(null);
   const [visited, setVisited] = useState<string[]>([]);
   const [revealUnlocked, setRevealUnlocked] = useState(false);
+  const [showRevealAnnouncement, setShowRevealAnnouncement] = useState(false);
+  const prevRevealUnlocked = useRef(false);
 
   useEffect(() => {
     setVisited(getVisited());
-    setRevealUnlocked(isRevealUnlocked());
+    const unlocked = isRevealUnlocked();
+    setRevealUnlocked(unlocked);
+    prevRevealUnlocked.current = unlocked;
   }, []);
 
   const handleSelect = (id: string) => {
@@ -75,7 +80,12 @@ export function FlatHome() {
     setSelected(null);
     setTimeout(() => {
       setVisited(getVisited());
-      setRevealUnlocked(isRevealUnlocked());
+      const unlocked = isRevealUnlocked();
+      if (unlocked && !prevRevealUnlocked.current) {
+        setShowRevealAnnouncement(true);
+      }
+      prevRevealUnlocked.current = unlocked;
+      setRevealUnlocked(unlocked);
     }, 100);
   };
 
@@ -183,6 +193,10 @@ export function FlatHome() {
       </div>
 
       <ContentOverlay sectionId={selected} onClose={handleClose} />
+      <RevealAnnouncement
+        show={showRevealAnnouncement}
+        onDismiss={() => setShowRevealAnnouncement(false)}
+      />
     </>
   );
 }

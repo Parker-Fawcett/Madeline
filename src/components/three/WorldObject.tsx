@@ -3,7 +3,7 @@
 import { useRef, useState, useMemo, Suspense, Component } from "react";
 import type { ReactNode } from "react";
 import { useFrame } from "@react-three/fiber";
-import { Float, Text, useGLTF } from "@react-three/drei";
+import { Float, Text, useGLTF, Sparkles } from "@react-three/drei";
 import * as THREE from "three";
 
 interface WorldObjectProps {
@@ -19,6 +19,7 @@ interface WorldObjectProps {
   inRange?: boolean;
   onClick: () => void;
   hidden?: boolean;
+  special?: boolean;
 }
 
 function MarkerModel({
@@ -107,6 +108,7 @@ export function WorldObject({
   inRange = false,
   onClick,
   hidden = false,
+  special = false,
 }: WorldObjectProps) {
   const groupRef = useRef<THREE.Group>(null);
   const [hovered, setHovered] = useState(false);
@@ -129,6 +131,18 @@ export function WorldObject({
 
   return (
     <group position={position}>
+      {special && (
+        <>
+          <pointLight color="#ffd27a" intensity={1.4} distance={5} />
+          <Sparkles
+            count={30}
+            scale={2.4}
+            size={2.5}
+            speed={0.3}
+            color="#ffd27a"
+          />
+        </>
+      )}
       <Float speed={1.5} rotationIntensity={0.2} floatIntensity={0.3}>
         <group
           ref={groupRef}
