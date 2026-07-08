@@ -1,15 +1,42 @@
 "use client";
 
-import { Suspense, useState, useRef } from "react";
+import { Suspense, useState, useRef, useEffect } from "react";
 import { Canvas } from "@react-three/fiber";
-import { Stats } from "@react-three/drei";
+import { Stats, PerspectiveCamera } from "@react-three/drei";
 import { Scene } from "./Scene";
 import { ContentOverlay } from "./ContentOverlay";
 import { Joystick, type JoystickVector } from "./Joystick";
 import { PITCH_MIN, PITCH_MAX, type CameraOrbit } from "./PlayerRig";
+import { RevealAnnouncement } from "./RevealAnnouncement";
 
 const YAW_SENSITIVITY = 0.006;
 const PITCH_SENSITIVITY = 0.005;
+const BASE_FOV = 50;
+// Wide/short landscape phones (e.g. ~812x375 to 926x428, aspect ~2.16)
+// crop too much of the scene vertically at the base FOV — widen it so
+// world objects and the ground stay in frame.
+const WIDE_LANDSCAPE_FOV = 62;
+const WIDE_LANDSCAPE_ASPECT = 1.6;
+
+function useResponsiveFov() {
+  const [fov, setFov] = useState(BASE_FOV);
+
+  useEffect(() => {
+    const update = () => {
+      const aspect = window.innerWidth / window.innerHeight;
+      setFov(aspect > WIDE_LANDSCAPE_ASPECT ? WIDE_LANDSCAPE_FOV : BASE_FOV);
+    };
+    update();
+    window.addEventListener("resize", update);
+    window.addEventListener("orientationchange", update);
+    return () => {
+      window.removeEventListener("resize", update);
+      window.removeEventListener("orientationchange", update);
+    };
+  }, []);
+
+  return fov;
+}
 
 interface Scene3DProps {
   visited: string[];
@@ -30,6 +57,16 @@ export default function Scene3D({
     lastX: number;
     lastY: number;
   } | null>(null);
+  const fov = useResponsiveFov();
+  const prevRevealUnlocked = useRef(revealUnlocked);
+  const [showRevealAnnouncement, setShowRevealAnnouncement] = useState(false);
+
+  useEffect(() => {
+    if (revealUnlocked && !prevRevealUnlocked.current) {
+      setShowRevealAnnouncement(true);
+    }
+    prevRevealUnlocked.current = revealUnlocked;
+  }, [revealUnlocked]);
 
   const handleSelect = (id: string) => {
     setSelected(id);
@@ -69,7 +106,6 @@ export default function Scene3D({
   return (
     <>
       <Canvas
-        camera={{ position: [0, 2, 8], fov: 50 }}
         dpr={[1, 1.5]}
         gl={{ antialias: true, alpha: false }}
         style={{ touchAction: "none" }}
@@ -78,6 +114,7 @@ export default function Scene3D({
         onPointerUp={handleDragEnd}
         onPointerCancel={handleDragEnd}
       >
+        <PerspectiveCamera makeDefault position={[0, 2, 8]} fov={fov} />
         {process.env.NODE_ENV === "development" && <Stats />}
         <Suspense fallback={null}>
           <Scene
@@ -92,6 +129,10 @@ export default function Scene3D({
 
       <Joystick vectorRef={joystickVectorRef} />
       <ContentOverlay sectionId={selected} onClose={handleClose} />
+      <RevealAnnouncement
+        show={showRevealAnnouncement}
+        onDismiss={() => setShowRevealAnnouncement(false)}
+      />
     </>
   );
 }

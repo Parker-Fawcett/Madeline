@@ -61,7 +61,13 @@ export function Joystick({
   return (
     <div
       className="fixed bottom-0 left-0 z-40"
-      style={{ width: "45vw", height: "40vh", touchAction: "none" }}
+      style={{
+        width: "min(45vw, 260px)",
+        height: "min(40vh, 220px)",
+        touchAction: "none",
+        marginLeft: "env(safe-area-inset-left, 0px)",
+        marginBottom: "env(safe-area-inset-bottom, 0px)",
+      }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={endTouch}

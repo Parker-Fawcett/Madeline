@@ -120,6 +120,7 @@ export function Scene({
           labelOffset={m.labelOffset}
           onClick={() => onSelect(m.id)}
           hidden={m.id === "reveal" && !revealUnlocked}
+          special={m.id === "reveal"}
           interactive={m.id === PROXIMITY_TARGET_ID ? inRangeId === m.id : true}
           inRange={m.id === PROXIMITY_TARGET_ID ? inRangeId === m.id : false}
         />
