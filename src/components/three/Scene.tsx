@@ -18,7 +18,7 @@ const PROXIMITY_TARGET_ID = "story";
 
 // Parker walks on her right and Pinto on her left, so neither blocks the
 // camera's view of her.
-const PET_FOLLOW: FollowConfig = { distance: 0.3, speed: 2.4, maxGap: 4 };
+const PET_FOLLOW: FollowConfig = { speed: 2.6, maxGap: 4 };
 const PARKER_SIDE = 0.45;
 const PINTO_SIDE = -0.4;
 const PARKER_WALK: WalkStyle = { turnSpeed: 8, stepSpeed: 14, hopHeight: 0.035, sway: 0.05 };

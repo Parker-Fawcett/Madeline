@@ -1,42 +1,25 @@
 import { describe, it, expect } from "vitest";
-import { walkTowards, isTap, blenderToThree, type WalkConfig } from "./tapWalk";
+import { resolveCollisions, isTap, blenderToThree, type Rect } from "./tapWalk";
 
-const config: WalkConfig = {
-  speed: 2,
-  arriveDistance: 0.05,
-  bounds: { minX: -10, maxX: 10, minZ: -10, maxZ: 10 },
-};
+const room: Rect = { minX: -10, maxX: 10, minZ: -10, maxZ: 10 };
 
-describe("walkTowards", () => {
-  it("walks toward the target at its speed", () => {
-    const pos = { x: 0, z: 0 };
-    expect(walkTowards(pos, { x: 0, z: 5 }, 0.5, config, [])).toBe(true);
-    expect(pos.x).toBeCloseTo(0);
-    expect(pos.z).toBeCloseTo(1);
+describe("resolveCollisions", () => {
+  it("pushes her out of furniture to its nearest edge", () => {
+    const pos = { x: 0, z: 0.9 };
+    resolveCollisions(pos, room, [{ minX: -1, maxX: 1, minZ: 0.8, maxZ: 2 }]);
+    expect(pos.z).toBeCloseTo(0.8);
   });
 
-  it("stops exactly on the target instead of overshooting", () => {
-    const pos = { x: 0, z: 0 };
-    walkTowards(pos, { x: 0, z: 0.5 }, 1, config, []);
-    expect(pos.z).toBeCloseTo(0.5);
+  it("keeps her inside the room", () => {
+    const pos = { x: 12, z: -11 };
+    resolveCollisions(pos, room, []);
+    expect(pos).toEqual({ x: 10, z: -10 });
   });
 
-  it("reports arrival once within the arrive distance", () => {
-    const pos = { x: 0, z: 0.98 };
-    expect(walkTowards(pos, { x: 0, z: 1 }, 0.1, config, [])).toBe(false);
-  });
-
-  it("never walks into furniture", () => {
-    const pos = { x: 0, z: 0 };
-    const couch = { minX: -1, maxX: 1, minZ: 0.8, maxZ: 2 };
-    for (let i = 0; i < 20; i++) walkTowards(pos, { x: 0, z: 3 }, 0.1, config, [couch]);
-    expect(pos.z).toBeLessThanOrEqual(0.8 + 1e-6);
-  });
-
-  it("stays inside the store", () => {
-    const pos = { x: 9.9, z: 0 };
-    walkTowards(pos, { x: 20, z: 0 }, 1, config, []);
-    expect(pos.x).toBeLessThanOrEqual(10);
+  it("leaves her alone when nothing is in the way", () => {
+    const pos = { x: 3, z: 3 };
+    resolveCollisions(pos, room, [{ minX: -1, maxX: 1, minZ: -1, maxZ: 1 }]);
+    expect(pos).toEqual({ x: 3, z: 3 });
   });
 });
 

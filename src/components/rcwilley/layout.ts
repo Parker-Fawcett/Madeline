@@ -1,4 +1,6 @@
-import type { Rect, WalkConfig } from "@/lib/tapWalk";
+import type { Rect } from "@/lib/tapWalk";
+import type { MotionConfig } from "@/lib/motion";
+import type { NavGrid } from "@/lib/pathfind";
 import { blenderToThree } from "@/lib/tapWalk";
 
 // Positions measured in the Blender model (z-up, metres) and converted to
@@ -9,20 +11,20 @@ function rect(bxMin: number, bxMax: number, byMin: number, byMax: number): Rect 
 
 export const MODEL_PATH = "/models/rc-willey.glb";
 
-export const WALK: WalkConfig = {
-  speed: 1.6,
-  arriveDistance: 0.06,
-  bounds: rect(-15.3, 15.3, -12.5, 12.6),
-};
+// Walkable floor, and the room the camera must stay inside.
+export const ROOM = rect(-15.3, 15.3, -12.5, 12.6);
+// Highest the camera may go: under the round ducts (bottom at ~3.98 m),
+// not just the ceiling, or it looks straight through them.
+export const CEILING_Y = 3.6;
+// The modelled section is open at the front (Blender y = -13); a wall
+// there keeps the camera from ever seeing outside it.
+export const FRONT_WALL_Z = 13;
+
+export const MOTION: MotionConfig = { maxSpeed: 1.6, accel: 3.2, decel: 3.0, arriveDistance: 0.05 };
+export const NAV: NavGrid = { bounds: ROOM, cell: 0.25, radius: 0.3 };
 
 // Just inside the atrium, facing out over the showroom.
 export const START = blenderToThree(-1, -0.6, 0);
-
-// Around the open end of the library display wall, so she doesn't walk
-// into its back when coming from the atrium side.
-export const AROUND_WALL = blenderToThree(-3.2, -3.5, 0);
-// The wall's couch-facing side; anywhere with a smaller z is the atrium side.
-export const WALL_FRONT_Z = blenderToThree(0, -2.9, 0).z;
 
 // Standing between the grey L sectional and its coffee table.
 export const COUCH_SPOT = blenderToThree(-6.2, -5.85, 0);
