@@ -12,10 +12,12 @@ const STEP_SPEED = 11;
 const HOP_HEIGHT = 0.05;
 const SWAY = 0.08;
 
-// Colours from her photos (honey-blonde hair, mint top, dark wide-leg
-// jeans); PlaceholderBody is replaced by the Blender model later.
+// Colours from her photos (brown hair with blonde front highlights, mint
+// top, dark wide-leg jeans); PlaceholderBody is replaced by the Blender
+// model later.
 const SKIN = "#f1c7a8";
-const HAIR = "#d9b26f";
+const HAIR = "#7a5235";
+const HIGHLIGHT = "#e0bd7a";
 const TOP = "#a8dccb";
 const PANTS = "#2e3a55";
 
@@ -42,6 +44,13 @@ function PlaceholderBody() {
         <boxGeometry args={[0.26, 0.28, 0.08]} />
         <meshStandardMaterial color={HAIR} roughness={0.9} flatShading />
       </mesh>
+      {/* face-framing highlight strands */}
+      {[-0.13, 0.13].map((x) => (
+        <mesh key={x} position={[x, 0.64, 0.06]}>
+          <boxGeometry args={[0.06, 0.26, 0.06]} />
+          <meshStandardMaterial color={HIGHLIGHT} roughness={0.9} flatShading />
+        </mesh>
+      ))}
     </group>
   );
 }
