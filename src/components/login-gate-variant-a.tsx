@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { getUnlocked, setUnlocked } from "@/lib/storage";
+import { SECRET_NAME, isCorrectName } from "@/lib/password";
 
-const SECRET_NAME = "Madeline";
+const SPLASH_MS = 600;
 
 const grainSvg = encodeURIComponent(
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
@@ -24,19 +25,17 @@ export function LoginGateA() {
   const [phase, setPhase] = useState<"splash" | "gate" | "redirecting">("splash");
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (getUnlocked()) {
-        setPhase("redirecting");
-        router.replace("/home");
-      } else {
-        setPhase("gate");
-      }
-    }, 1400);
+    if (getUnlocked()) {
+      setPhase("redirecting");
+      router.replace("/home");
+      return;
+    }
+    const timer = setTimeout(() => setPhase("gate"), SPLASH_MS);
     return () => clearTimeout(timer);
   }, [router]);
 
   const handleSubmit = () => {
-    if (input.trim().toLowerCase() === SECRET_NAME.toLowerCase()) {
+    if (isCorrectName(input)) {
       setUnlocked();
       setUnlockedState(true);
       setTimeout(() => router.push("/home"), 800);
@@ -116,7 +115,7 @@ export function LoginGateA() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0, y: -12 }}
-                  transition={{ delay: 1.0 }}
+                  transition={{ delay: 0.4 }}
                   className="mt-10"
                 >
                   <p className="mb-5 text-sm text-[#8c847a]">
@@ -134,6 +133,11 @@ export function LoginGateA() {
                         if (e.key === "Enter") handleSubmit();
                       }}
                       placeholder="..."
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      autoComplete="off"
+                      spellCheck={false}
+                      enterKeyHint="go"
                       className={`w-full rounded-xl border bg-[#fcfaf6] px-4 py-3 text-center text-lg text-[#3d3832] placeholder-[#a89e8f] outline-none transition-all duration-300 ${
                         error
                           ? "border-[#c4665c] shadow-[0_2px_12px_rgba(196,102,92,0.12)]"
@@ -142,6 +146,13 @@ export function LoginGateA() {
                       autoFocus
                     />
                   </div>
+                  <button
+                    type="button"
+                    onClick={handleSubmit}
+                    className="mt-4 rounded-full px-6 py-2 text-sm tracking-widest text-[#6b8b80] uppercase transition-colors active:bg-[#6b8b80]/10"
+                  >
+                    open ♡
+                  </button>
                   {error && (
                     <motion.p
                       initial={{ opacity: 0, y: -4 }}

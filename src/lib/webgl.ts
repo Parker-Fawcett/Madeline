@@ -3,22 +3,13 @@ export function supportsWebGL(): boolean {
 
   try {
     const canvas = document.createElement("canvas");
-    const gl =
-      canvas.getContext("webgl") ||
-      canvas.getContext("experimental-webgl");
-    return !!(gl && typeof (gl as WebGLRenderingContext).getParameter === "function");
-  } catch {
-    return false;
-  }
-}
-
-export function supportsWebGL2(): boolean {
-  if (typeof window === "undefined") return false;
-
-  try {
-    const canvas = document.createElement("canvas");
-    const gl = canvas.getContext("webgl2");
-    return !!(gl && typeof (gl as WebGL2RenderingContext).getParameter === "function");
+    const gl = (canvas.getContext("webgl") ||
+      canvas.getContext("experimental-webgl")) as WebGLRenderingContext | null;
+    const ok = !!(gl && typeof gl.getParameter === "function");
+    // iOS Safari caps live WebGL contexts; free the probe so it doesn't
+    // count against the real scene.
+    gl?.getExtension("WEBGL_lose_context")?.loseContext();
+    return ok;
   } catch {
     return false;
   }

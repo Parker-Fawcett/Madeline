@@ -6,6 +6,12 @@ import { useFrame } from "@react-three/fiber";
 import { Float, Text, useGLTF, Sparkles } from "@react-three/drei";
 import * as THREE from "three";
 
+// Served locally: without a font, troika fetches font data from a CDN and
+// the whole scene suspends (blank screen) until it arrives.
+export const LABEL_FONT = "/fonts/Geist-Regular.ttf";
+const BASE_SCALE = new THREE.Vector3(1, 1, 1);
+const HIGHLIGHT_SCALE = new THREE.Vector3(1.25, 1.25, 1.25);
+
 interface WorldObjectProps {
   position: [number, number, number];
   color: string;
@@ -82,6 +88,7 @@ function MarkerShape({ color, icon }: { color: string; icon: string }) {
       </mesh>
       {icon && (
         <Text
+          font={LABEL_FONT}
           position={[0, 0, 0.6]}
           fontSize={0.4}
           color="white"
@@ -114,14 +121,9 @@ export function WorldObject({
   const [hovered, setHovered] = useState(false);
 
   useFrame((_, delta) => {
-    const highlighted = hovered || inRange;
     if (groupRef.current) {
       groupRef.current.scale.lerp(
-        new THREE.Vector3(
-          highlighted ? 1.25 : 1,
-          highlighted ? 1.25 : 1,
-          highlighted ? 1.25 : 1
-        ),
+        hovered || inRange ? HIGHLIGHT_SCALE : BASE_SCALE,
         delta * 4
       );
     }
@@ -174,6 +176,7 @@ export function WorldObject({
 
       {inRange && (
         <Text
+          font={LABEL_FONT}
           position={[0, 0.9, 0]}
           fontSize={0.18}
           color="#f5f0e8"
@@ -185,6 +188,7 @@ export function WorldObject({
       )}
 
       <Text
+        font={LABEL_FONT}
         position={[0, labelOffset, 0]}
         fontSize={0.15}
         color={hovered ? "#e4e4e7" : "#71717a"}
