@@ -5,6 +5,9 @@ import { Particles } from "./Particles";
 import { WorldObject } from "./WorldObject";
 import { PlayerRig, PLAYER_START, type CameraOrbit, type PlayerState } from "./PlayerRig";
 import { Avatar } from "./Avatar";
+import { Companion } from "./Companion";
+import type { FollowConfig } from "@/lib/follow";
+import type { WalkStyle } from "./useWalkAnimation";
 import { Scenery, SKY_HORIZON, TREE_OBSTACLES } from "./Scenery";
 import type { JoystickVector } from "./Joystick";
 import { MARKERS } from "./markers";
@@ -12,6 +15,14 @@ import { MARKERS } from "./markers";
 const COLLISION_RADIUS = 0.9;
 const PROXIMITY_RADIUS = 2.2;
 const PROXIMITY_TARGET_ID = "story";
+
+// Parker walks on her right and Pinto on her left, so neither blocks the
+// camera's view of her.
+const PET_FOLLOW: FollowConfig = { distance: 0.3, speed: 2.4, maxGap: 4 };
+const PARKER_SIDE = 0.45;
+const PINTO_SIDE = -0.4;
+const PARKER_WALK: WalkStyle = { turnSpeed: 8, stepSpeed: 14, hopHeight: 0.035, sway: 0.05 };
+const PINTO_WALK: WalkStyle = { turnSpeed: 9, stepSpeed: 16, hopHeight: 0.025, sway: 0.04 };
 
 interface SceneProps {
   onSelect: (id: string) => void;
@@ -31,6 +42,8 @@ export function Scene({
   const markers = useMemo(() => MARKERS, []);
   const [inRangeId, setInRangeId] = useState<string | null>(null);
   const playerRef = useRef<PlayerState>({ ...PLAYER_START, walking: false });
+  const parkerRef = useRef<PlayerState>({ x: PLAYER_START.x + PARKER_SIDE, z: PLAYER_START.z + 0.3, walking: false });
+  const pintoRef = useRef<PlayerState>({ x: PLAYER_START.x + PINTO_SIDE, z: PLAYER_START.z + 0.3, walking: false });
 
   const collisionTargets = useMemo(
     () =>
@@ -118,6 +131,24 @@ export function Scene({
         onProximityChange={handleProximityChange}
       />
       <Avatar playerRef={playerRef} />
+      <Companion
+        modelPath="/models/parker.glb"
+        stateRef={parkerRef}
+        leaderRef={playerRef}
+        cameraOrbitRef={cameraOrbitRef}
+        side={PARKER_SIDE}
+        follow={PET_FOLLOW}
+        walk={PARKER_WALK}
+      />
+      <Companion
+        modelPath="/models/pinto.glb"
+        stateRef={pintoRef}
+        leaderRef={playerRef}
+        cameraOrbitRef={cameraOrbitRef}
+        side={PINTO_SIDE}
+        follow={PET_FOLLOW}
+        walk={PINTO_WALK}
+      />
     </>
   );
 }
