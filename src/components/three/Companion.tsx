@@ -22,6 +22,8 @@ export function Companion({
   side,
   follow,
   walk,
+  modelScale = 1,
+  facing = Math.PI,
 }: {
   modelPath: string;
   stateRef: React.MutableRefObject<PlayerState>;
@@ -30,6 +32,8 @@ export function Companion({
   side: number;
   follow: FollowConfig;
   walk: WalkStyle;
+  modelScale?: number;
+  facing?: number;
 }) {
   const target = useRef({ x: 0, z: 0 });
 
@@ -40,8 +44,8 @@ export function Companion({
   const { rootRef, bodyRef } = useWalkAnimation(stateRef, walk);
 
   return (
-    <group ref={rootRef} rotation={[0, Math.PI, 0]}>
-      <group ref={bodyRef}>
+    <group ref={rootRef} rotation={[0, facing, 0]}>
+      <group ref={bodyRef} scale={modelScale}>
         <CompanionModel path={modelPath} />
       </group>
     </group>

@@ -11,7 +11,7 @@ interface SectionContent {
   body: (string | { type: "track"; title: string; artist: string } | { type: "quote"; text: string; author?: string; authorImage?: string; detail?: string })[];
 }
 
-const sections: Record<string, SectionContent> = {
+export const sections: Record<string, SectionContent> = {
   story: {
     title: "The Canyon Drive",
     subtitle: "how we started",
