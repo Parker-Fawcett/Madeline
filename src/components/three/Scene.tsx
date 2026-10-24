@@ -1,39 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Particles } from "./Particles";
 import { WorldObject } from "./WorldObject";
-import { PlayerRig, type CameraOrbit } from "./PlayerRig";
+import { PlayerRig, PLAYER_START, type CameraOrbit, type PlayerState } from "./PlayerRig";
+import { Avatar } from "./Avatar";
+import { Scenery, SKY_HORIZON, TREE_OBSTACLES } from "./Scenery";
 import type { JoystickVector } from "./Joystick";
+import { MARKERS } from "./markers";
 
 const COLLISION_RADIUS = 0.9;
 const PROXIMITY_RADIUS = 2.2;
 const PROXIMITY_TARGET_ID = "story";
-
-interface MarkerDef {
-  id: string;
-  label: string;
-  icon: string;
-  color: string;
-  position: [number, number, number];
-  modelPath?: string;
-  modelScale?: number;
-  modelTint?: string;
-  labelOffset?: number;
-}
-
-// All models scaled so their largest bounding-box dimension matches the
-// giraffe's (~1.19 units), and positioned so each model's bottom rests on
-// the ground plane (y = -0.1). labelOffset is computed per marker so the
-// label always lands at world y = -0.4 regardless of the model's height.
-const MARKERS: MarkerDef[] = [
-  { id: "story", label: "Our Story", icon: "", color: "#6b8f87", position: [-3.5, -0.1, -3], modelPath: "/models/car.glb", modelScale: 0.064, labelOffset: -0.3 },
-  { id: "memories", label: "Memories", icon: "", color: "#8a7592", position: [3.5, 0.311, -3], modelPath: "/models/dumpling-compressed.glb", modelScale: 0.597, modelTint: "#8a7592", labelOffset: -0.711 },
-  { id: "quote", label: "Your Words", icon: "", color: "#b3766b", position: [-4, -0.1, 3], modelPath: "/models/giraffe.glb", modelScale: 0.004, modelTint: "#b3766b", labelOffset: -0.3 },
-  { id: "letter", label: "A Letter", icon: "", color: "#6b8f87", position: [0, 0.27, 5.5], modelPath: "/models/letter.glb", modelScale: 0.864, modelTint: "#d98c4a", labelOffset: -0.67 },
-  { id: "playlist", label: "Playlist", icon: "♪", color: "#8a7592", position: [4, -0.099, 3], modelPath: "/models/cat.glb", modelScale: 1.545, modelTint: "#c17a4a", labelOffset: -0.301 },
-  { id: "reveal", label: "One More Thing", icon: "★", color: "#b3766b", position: [0, -0.1, -6], modelPath: "/models/monster-compressed.glb", modelScale: 1.224, modelTint: "#b3766b", labelOffset: -0.3 },
-];
 
 interface SceneProps {
   onSelect: (id: string) => void;
@@ -52,6 +30,7 @@ export function Scene({
 }: SceneProps) {
   const markers = useMemo(() => MARKERS, []);
   const [inRangeId, setInRangeId] = useState<string | null>(null);
+  const playerRef = useRef<PlayerState>({ ...PLAYER_START, walking: false });
 
   const collisionTargets = useMemo(
     () =>
@@ -62,7 +41,8 @@ export function Scene({
           x: m.position[0],
           z: m.position[2],
           radius: COLLISION_RADIUS,
-        })),
+        }))
+        .concat(TREE_OBSTACLES),
     [markers, revealUnlocked]
   );
 
@@ -72,7 +52,9 @@ export function Scene({
 
   return (
     <>
-      <color attach="background" args={["#f5e0c3"]} />
+      <color attach="background" args={[SKY_HORIZON]} />
+      <fog attach="fog" args={[SKY_HORIZON, 12, 30]} />
+      <Scenery />
 
       <ambientLight intensity={0.4} />
       <hemisphereLight
@@ -97,13 +79,13 @@ export function Scene({
         />
       </mesh>
 
-      {/* ground accent ring */}
+      {/* path */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.05, 0]}>
         <ringGeometry args={[5.5, 6, 64]} />
         <meshBasicMaterial
           color="#d4a76a"
           transparent
-          opacity={0.06}
+          opacity={0.35}
           side={2}
         />
       </mesh>
@@ -118,7 +100,6 @@ export function Scene({
           modelPath={m.modelPath}
           modelScale={m.modelScale}
           modelTint={m.modelTint}
-          labelOffset={m.labelOffset}
           onClick={() => onSelect(m.id)}
           hidden={m.id === "reveal" && !revealUnlocked}
           special={m.id === "reveal"}
@@ -128,6 +109,7 @@ export function Scene({
       ))}
 
       <PlayerRig
+        playerRef={playerRef}
         joystickVectorRef={joystickVectorRef}
         cameraOrbitRef={cameraOrbitRef}
         collisionTargets={collisionTargets}
@@ -135,9 +117,8 @@ export function Scene({
         proximityRadius={PROXIMITY_RADIUS}
         onProximityChange={handleProximityChange}
       />
+      <Avatar playerRef={playerRef} />
     </>
   );
 }
 
-export { MARKERS };
-export type { MarkerDef };

@@ -7,9 +7,10 @@ import type { JoystickVector } from "./Joystick";
 import { stepPlayer, type Obstacle, type MoveConfig } from "@/lib/movement";
 
 const MOVE_CONFIG: MoveConfig = { speed: 2.2, deadzone: 0.08, groundRadius: 11.3 };
-const BASE_HEIGHT = 1.1;
-const BASE_DISTANCE = 2.3;
-const PLAYER_START = { x: 0, z: 8 };
+// Pulled back from 1.1/2.3 so the avatar sits in frame instead of filling it.
+const BASE_HEIGHT = 1.3;
+const BASE_DISTANCE = 3;
+export const PLAYER_START = { x: 0, z: 8 };
 const BOB_SPEED = 9;
 const BOB_AMPLITUDE = 0.06;
 export const PITCH_MIN = -0.15;
@@ -24,7 +25,15 @@ export interface CameraOrbit {
   pitch: number;
 }
 
+// Shared with the avatar so it can follow and animate the player.
+export interface PlayerState {
+  x: number;
+  z: number;
+  walking: boolean;
+}
+
 export function PlayerRig({
+  playerRef,
   joystickVectorRef,
   cameraOrbitRef,
   collisionTargets,
@@ -32,6 +41,7 @@ export function PlayerRig({
   proximityRadius = 2.2,
   onProximityChange,
 }: {
+  playerRef: React.MutableRefObject<PlayerState>;
   joystickVectorRef: React.MutableRefObject<JoystickVector>;
   cameraOrbitRef: React.MutableRefObject<CameraOrbit>;
   collisionTargets: CollisionTarget[];
@@ -40,7 +50,6 @@ export function PlayerRig({
   onProximityChange?: (id: string, inRange: boolean) => void;
 }) {
   const { camera } = useThree();
-  const playerPos = useRef({ ...PLAYER_START });
   const targetCamPos = useRef(new THREE.Vector3());
   const wasInRange = useRef(false);
   const bobPhase = useRef(0);
@@ -55,7 +64,7 @@ export function PlayerRig({
   }, []);
 
   useFrame((_, delta) => {
-    const pos = playerPos.current;
+    const pos = playerRef.current;
     const { yaw, pitch } = cameraOrbitRef.current;
     const isWalking = stepPlayer(
       pos,
@@ -65,6 +74,7 @@ export function PlayerRig({
       collisionTargets,
       MOVE_CONFIG
     );
+    pos.walking = isWalking;
 
     const clampedPitch = THREE.MathUtils.clamp(pitch, PITCH_MIN, PITCH_MAX);
     const horizontal = BASE_DISTANCE * Math.cos(clampedPitch);
