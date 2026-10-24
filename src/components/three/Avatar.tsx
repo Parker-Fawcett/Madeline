@@ -1,58 +1,18 @@
 "use client";
 
-import { useRef } from "react";
-import { useFrame } from "@react-three/fiber";
-import * as THREE from "three";
-import { headingOf, turnTowards } from "@/lib/heading";
-import { GROUND_Y } from "@/lib/labels";
+import { useGLTF } from "@react-three/drei";
 import type { PlayerState } from "./PlayerRig";
+import { useWalkAnimation, type WalkStyle } from "./useWalkAnimation";
 
-const TURN_SPEED = 10; // radians per second
-const STEP_SPEED = 11;
-const HOP_HEIGHT = 0.05;
-const SWAY = 0.08;
+const WALK: WalkStyle = { turnSpeed: 10, stepSpeed: 11, hopHeight: 0.05, sway: 0.08 };
 
-// Colours from her photos (brown hair with blonde front highlights, mint
-// top, dark wide-leg jeans); PlaceholderBody is replaced by the Blender
-// model later.
-const SKIN = "#f1c7a8";
-const HAIR = "#7a5235";
-const HIGHLIGHT = "#e0bd7a";
-const TOP = "#a8dccb";
-const PANTS = "#2e3a55";
+// Modelled in Blender from her photos (brown hair with blonde front
+// highlights, freckles, mint top, wide-leg jeans). Faces +z, feet at 0.
+const MODEL_PATH = "/models/madeline.glb";
 
-function PlaceholderBody() {
-  return (
-    <group>
-      <mesh position={[0, 0.16, 0]}>
-        <cylinderGeometry args={[0.12, 0.18, 0.32, 8]} />
-        <meshStandardMaterial color={PANTS} roughness={0.85} flatShading />
-      </mesh>
-      <mesh position={[0, 0.44, 0]}>
-        <cylinderGeometry args={[0.15, 0.12, 0.24, 8]} />
-        <meshStandardMaterial color={TOP} roughness={0.8} flatShading />
-      </mesh>
-      <mesh position={[0, 0.72, 0]}>
-        <icosahedronGeometry args={[0.16, 1]} />
-        <meshStandardMaterial color={SKIN} roughness={0.8} flatShading />
-      </mesh>
-      <mesh position={[0, 0.75, -0.04]} scale={1.06}>
-        <icosahedronGeometry args={[0.16, 1]} />
-        <meshStandardMaterial color={HAIR} roughness={0.9} flatShading />
-      </mesh>
-      <mesh position={[0, 0.62, -0.1]}>
-        <boxGeometry args={[0.26, 0.28, 0.08]} />
-        <meshStandardMaterial color={HAIR} roughness={0.9} flatShading />
-      </mesh>
-      {/* face-framing highlight strands */}
-      {[-0.13, 0.13].map((x) => (
-        <mesh key={x} position={[x, 0.64, 0.06]}>
-          <boxGeometry args={[0.06, 0.26, 0.06]} />
-          <meshStandardMaterial color={HIGHLIGHT} roughness={0.9} flatShading />
-        </mesh>
-      ))}
-    </group>
-  );
+function MadelineModel() {
+  const { scene } = useGLTF(MODEL_PATH, true, true);
+  return <primitive object={scene} />;
 }
 
 export function Avatar({
@@ -60,37 +20,13 @@ export function Avatar({
 }: {
   playerRef: React.MutableRefObject<PlayerState>;
 }) {
-  const rootRef = useRef<THREE.Group>(null);
-  const bodyRef = useRef<THREE.Group>(null);
-  const last = useRef({ x: playerRef.current.x, z: playerRef.current.z });
-  const stepPhase = useRef(0);
-
-  useFrame((_, delta) => {
-    const root = rootRef.current;
-    const body = bodyRef.current;
-    if (!root || !body) return;
-
-    const p = playerRef.current;
-    const dx = p.x - last.current.x;
-    const dz = p.z - last.current.z;
-    last.current.x = p.x;
-    last.current.z = p.z;
-
-    if (dx * dx + dz * dz > 1e-8) {
-      root.rotation.y = turnTowards(root.rotation.y, headingOf(dx, dz), TURN_SPEED * delta);
-    }
-    root.position.set(p.x, GROUND_Y, p.z);
-
-    stepPhase.current = p.walking ? stepPhase.current + delta * STEP_SPEED : 0;
-    body.position.y = Math.abs(Math.sin(stepPhase.current)) * HOP_HEIGHT;
-    body.rotation.z = Math.sin(stepPhase.current) * SWAY;
-  });
+  const { rootRef, bodyRef } = useWalkAnimation(playerRef, WALK);
 
   return (
     // Start facing into the world (-z), away from the camera.
     <group ref={rootRef} rotation={[0, Math.PI, 0]}>
       <group ref={bodyRef}>
-        <PlaceholderBody />
+        <MadelineModel />
       </group>
     </group>
   );
