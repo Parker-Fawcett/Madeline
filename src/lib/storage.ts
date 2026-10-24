@@ -3,62 +3,62 @@ const KEYS = {
   visited: "pretty:visited",
 } as const;
 
-function isAvailable(): boolean {
+// Private browsing and in-app browsers (Snapchat, Instagram) can block
+// localStorage. Fall back to memory so progress lasts at least this visit
+// instead of bouncing back to the login gate.
+const memory = new Map<string, string>();
+
+function read(key: string): string | null {
+  if (typeof window === "undefined") return null;
   try {
-    const test = "__storage_test__";
-    localStorage.setItem(test, test);
-    localStorage.removeItem(test);
-    return true;
+    return localStorage.getItem(key) ?? memory.get(key) ?? null;
   } catch {
-    return false;
+    return memory.get(key) ?? null;
+  }
+}
+
+function write(key: string, value: string): void {
+  memory.set(key, value);
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // storage unavailable — memory copy covers this visit
+  }
+}
+
+function remove(key: string): void {
+  memory.delete(key);
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // storage unavailable — nothing persisted to remove
   }
 }
 
 export function getUnlocked(): boolean {
-  if (typeof window === "undefined" || !isAvailable()) return false;
-  try {
-    return localStorage.getItem(KEYS.unlocked) === "true";
-  } catch {
-    return false;
-  }
+  return read(KEYS.unlocked) === "true";
 }
 
 export function setUnlocked(): void {
-  if (typeof window === "undefined" || !isAvailable()) return;
-  try {
-    localStorage.setItem(KEYS.unlocked, "true");
-  } catch {
-    // storage unavailable — fail silently
-  }
+  write(KEYS.unlocked, "true");
 }
 
 export function getVisited(): string[] {
-  if (typeof window === "undefined" || !isAvailable()) return [];
   try {
-    return JSON.parse(localStorage.getItem(KEYS.visited) || "[]");
+    return JSON.parse(read(KEYS.visited) || "[]");
   } catch {
     return [];
   }
 }
 
 export function addVisited(route: string): void {
-  const current = getVisited();
-  const updated = Array.from(new Set([...current, route]));
-  try {
-    localStorage.setItem(KEYS.visited, JSON.stringify(updated));
-  } catch {
-    // storage unavailable — fail silently
-  }
+  const updated = Array.from(new Set([...getVisited(), route]));
+  write(KEYS.visited, JSON.stringify(updated));
 }
 
 export function clear(): void {
-  if (typeof window === "undefined" || !isAvailable()) return;
-  try {
-    localStorage.removeItem(KEYS.unlocked);
-    localStorage.removeItem(KEYS.visited);
-  } catch {
-    // storage unavailable — fail silently
-  }
+  remove(KEYS.unlocked);
+  remove(KEYS.visited);
 }
 
 export const REQUIRED_ROUTES = [

@@ -59,7 +59,8 @@ export function Scene({
         .filter((m) => !(m.id === "reveal" && !revealUnlocked))
         .map((m) => ({
           id: m.id,
-          position: m.position,
+          x: m.position[0],
+          z: m.position[2],
           radius: COLLISION_RADIUS,
         })),
     [markers, revealUnlocked]

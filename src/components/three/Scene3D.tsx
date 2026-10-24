@@ -8,7 +8,19 @@ import { ContentOverlay } from "./ContentOverlay";
 import { Joystick, type JoystickVector } from "./Joystick";
 import { PITCH_MIN, PITCH_MAX, type CameraOrbit } from "./PlayerRig";
 import { RevealAnnouncement } from "./RevealAnnouncement";
+import { FrameRateCap } from "./FrameRateCap";
+import { LoadingScreen } from "./LoadingScreen";
 
+const TARGET_FPS = 30;
+
+// Rendered inside the Suspense boundary, so it mounts only once every
+// model and font the scene needs has loaded.
+function OnMount({ onMount }: { onMount: () => void }) {
+  useEffect(() => {
+    onMount();
+  }, [onMount]);
+  return null;
+}
 const YAW_SENSITIVITY = 0.006;
 const PITCH_SENSITIVITY = 0.005;
 const BASE_FOV = 50;
@@ -60,6 +72,11 @@ export default function Scene3D({
   const fov = useResponsiveFov();
   const prevRevealUnlocked = useRef(revealUnlocked);
   const [showRevealAnnouncement, setShowRevealAnnouncement] = useState(false);
+  const [sceneLoaded, setSceneLoaded] = useState(false);
+  // iOS Safari drops WebGL contexts under memory pressure and often never
+  // restores them; remounting the Canvas creates a fresh one instead of
+  // leaving a black screen.
+  const [canvasKey, setCanvasKey] = useState(0);
 
   useEffect(() => {
     if (revealUnlocked && !prevRevealUnlocked.current) {
@@ -106,14 +123,24 @@ export default function Scene3D({
   return (
     <>
       <Canvas
+        key={canvasKey}
+        onCreated={({ gl }) => {
+          gl.domElement.addEventListener(
+            "webglcontextlost",
+            () => setCanvasKey((k) => k + 1),
+            { once: true }
+          );
+        }}
+        frameloop="never"
         dpr={[1, 1.5]}
-        gl={{ antialias: true, alpha: false }}
+        gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
         style={{ touchAction: "none" }}
         onPointerDown={handleDragStart}
         onPointerMove={handleDragMove}
         onPointerUp={handleDragEnd}
         onPointerCancel={handleDragEnd}
       >
+        <FrameRateCap fps={TARGET_FPS} />
         <PerspectiveCamera makeDefault position={[0, 2, 8]} fov={fov} />
         {process.env.NODE_ENV === "development" && <Stats />}
         <Suspense fallback={null}>
@@ -124,9 +151,11 @@ export default function Scene3D({
             joystickVectorRef={joystickVectorRef}
             cameraOrbitRef={cameraOrbitRef}
           />
+          <OnMount onMount={() => setSceneLoaded(true)} />
         </Suspense>
       </Canvas>
 
+      <LoadingScreen show={!sceneLoaded} />
       <Joystick vectorRef={joystickVectorRef} />
       <ContentOverlay sectionId={selected} onClose={handleClose} />
       <RevealAnnouncement
