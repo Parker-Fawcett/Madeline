@@ -3,8 +3,9 @@
 import { useRef, useState, useMemo, Suspense, Component } from "react";
 import type { ReactNode } from "react";
 import { useFrame } from "@react-three/fiber";
-import { Float, Text, useGLTF, Sparkles } from "@react-three/drei";
+import { Billboard, Float, Text, useGLTF, Sparkles } from "@react-three/drei";
 import * as THREE from "three";
+import { labelOffsetFor } from "@/lib/labels";
 
 // Served locally: without a font, troika fetches font data from a CDN and
 // the whole scene suspends (blank screen) until it arrives.
@@ -20,7 +21,6 @@ interface WorldObjectProps {
   modelPath?: string;
   modelScale?: number;
   modelTint?: string;
-  labelOffset?: number;
   interactive?: boolean;
   inRange?: boolean;
   onClick: () => void;
@@ -110,7 +110,6 @@ export function WorldObject({
   modelPath,
   modelScale = 1,
   modelTint,
-  labelOffset = -0.9,
   interactive = true,
   inRange = false,
   onClick,
@@ -174,30 +173,30 @@ export function WorldObject({
         </group>
       </Float>
 
-      {inRange && (
+      <Billboard position={[0, labelOffsetFor(position[1]), 0]}>
         <Text
           font={LABEL_FONT}
-          position={[0, 0.9, 0]}
-          fontSize={0.18}
-          color="#f5f0e8"
+          fontSize={0.15}
+          color={hovered ? "#3d3832" : "#5a534b"}
           anchorX="center"
           anchorY="bottom"
+          maxWidth={2}
         >
-          tap to open
+          {label}
         </Text>
-      )}
-
-      <Text
-        font={LABEL_FONT}
-        position={[0, labelOffset, 0]}
-        fontSize={0.15}
-        color={hovered ? "#e4e4e7" : "#71717a"}
-        anchorX="center"
-        anchorY="top"
-        maxWidth={2}
-      >
-        {label}
-      </Text>
+        {inRange && (
+          <Text
+            font={LABEL_FONT}
+            position={[0, 0.22, 0]}
+            fontSize={0.13}
+            color="#6b8f87"
+            anchorX="center"
+            anchorY="bottom"
+          >
+            tap to open
+          </Text>
+        )}
+      </Billboard>
     </group>
   );
 }
