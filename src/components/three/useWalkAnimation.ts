@@ -10,6 +10,7 @@ export interface WalkStyle {
   stepSpeed: number;
   hopHeight: number;
   sway: number;
+  groundY?: number; // defaults to the original field's ground
 }
 
 // Places a character at its state's position, turns it to face the way it
@@ -38,7 +39,7 @@ export function useWalkAnimation(
     if (dx * dx + dz * dz > 1e-8) {
       root.rotation.y = turnTowards(root.rotation.y, headingOf(dx, dz), style.turnSpeed * delta);
     }
-    root.position.set(p.x, GROUND_Y, p.z);
+    root.position.set(p.x, style.groundY ?? GROUND_Y, p.z);
 
     stepPhase.current = p.walking ? stepPhase.current + delta * style.stepSpeed : 0;
     body.position.y = Math.abs(Math.sin(stepPhase.current)) * style.hopHeight;

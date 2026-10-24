@@ -17,15 +17,20 @@ function MadelineModel() {
 
 export function Avatar({
   playerRef,
+  modelScale = 1,
+  groundY,
+  facing = Math.PI,
 }: {
   playerRef: React.MutableRefObject<PlayerState>;
+  modelScale?: number;
+  groundY?: number;
+  facing?: number; // starting heading; the original field world faces -z
 }) {
-  const { rootRef, bodyRef } = useWalkAnimation(playerRef, WALK);
+  const { rootRef, bodyRef } = useWalkAnimation(playerRef, { ...WALK, groundY });
 
   return (
-    // Start facing into the world (-z), away from the camera.
-    <group ref={rootRef} rotation={[0, Math.PI, 0]}>
-      <group ref={bodyRef}>
+    <group ref={rootRef} rotation={[0, facing, 0]}>
+      <group ref={bodyRef} scale={modelScale}>
         <MadelineModel />
       </group>
     </group>
