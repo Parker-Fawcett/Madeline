@@ -20,13 +20,15 @@ export function Avatar({
   modelScale = 1,
   groundY,
   facing = Math.PI,
+  walk = WALK,
 }: {
   playerRef: React.MutableRefObject<PlayerState>;
   modelScale?: number;
   groundY?: number;
   facing?: number; // starting heading; the original field world faces -z
+  walk?: WalkStyle;
 }) {
-  const { rootRef, bodyRef } = useWalkAnimation(playerRef, { ...WALK, groundY });
+  const { rootRef, bodyRef } = useWalkAnimation(playerRef, { ...walk, groundY: groundY ?? walk.groundY });
 
   return (
     <group ref={rootRef} rotation={[0, facing, 0]}>

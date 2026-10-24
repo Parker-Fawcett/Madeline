@@ -5,6 +5,9 @@ import { headingOf, turnTowards } from "@/lib/heading";
 import { GROUND_Y } from "@/lib/labels";
 import type { PlayerState } from "./PlayerRig";
 
+const STRIDE_EASE = 6;
+const LEAN = 0.06; // radians forward at full walk
+
 export interface WalkStyle {
   turnSpeed: number; // radians per second
   stepSpeed: number;
@@ -14,7 +17,8 @@ export interface WalkStyle {
 }
 
 // Places a character at its state's position, turns it to face the way it
-// moves and hops it while walking. Put `rootRef` on the outer group and
+// moves and bobs it gently while walking, easing the bob in and out so
+// starting and stopping don't snap. Put `rootRef` on the outer group and
 // `bodyRef` on the group holding the model.
 export function useWalkAnimation(
   stateRef: React.MutableRefObject<PlayerState>,
@@ -24,6 +28,7 @@ export function useWalkAnimation(
   const bodyRef = useRef<THREE.Group>(null);
   const last = useRef({ x: stateRef.current.x, z: stateRef.current.z });
   const stepPhase = useRef(0);
+  const stride = useRef(0); // 0 standing .. 1 full walk
 
   useFrame((_, delta) => {
     const root = rootRef.current;
@@ -41,9 +46,13 @@ export function useWalkAnimation(
     }
     root.position.set(p.x, style.groundY ?? GROUND_Y, p.z);
 
-    stepPhase.current = p.walking ? stepPhase.current + delta * style.stepSpeed : 0;
-    body.position.y = Math.abs(Math.sin(stepPhase.current)) * style.hopHeight;
-    body.rotation.z = Math.sin(stepPhase.current) * style.sway;
+    const ease = 1 - Math.exp(-delta * STRIDE_EASE);
+    stride.current += ((p.walking ? 1 : 0) - stride.current) * ease;
+    stepPhase.current += delta * style.stepSpeed * stride.current;
+    // two bobs per stride cycle, one per footstep, smooth at the bottom
+    body.position.y = ((1 - Math.cos(stepPhase.current * 2)) / 2) * style.hopHeight * stride.current;
+    body.rotation.z = Math.sin(stepPhase.current) * style.sway * stride.current;
+    body.rotation.x = LEAN * stride.current;
   });
 
   return { rootRef, bodyRef };
